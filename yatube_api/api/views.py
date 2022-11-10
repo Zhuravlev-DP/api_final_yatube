@@ -4,7 +4,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework import viewsets, mixins, filters
 
 from .permissions import IsAuthorOrReadOnly
-from posts.models import Post, Group, User
+from posts.models import Post, Group
 from .serializers import (
     PostSerializer,
     GroupSerializer,
@@ -50,24 +50,19 @@ class CommentViewSet(viewsets.ModelViewSet):
         )
 
 
-class CreateRetrieveViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
-                            viewsets.GenericViewSet):
-    pass
-
-
-class FollowViewSet(CreateRetrieveViewSet):
+class FollowViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
     serializer_class = FollowSerializer
     permission_classes = (IsAuthenticated,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('following__username',)
 
-    def get_user(self):
-        """Получить аутентифицированного пользователя"""
-        return get_object_or_404(User, username=self.request.user)
-
     def get_queryset(self):
         """Кверисет подписчиков аутентифицированного пользователя"""
-        return self.get_user().follower.all()
+        return self.request.user.follower.all()
 
     def perform_create(self, serializer):
         """Передать объект пользователя в поле user"""
